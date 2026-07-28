@@ -1,0 +1,58 @@
+{
+  "avatars": [
+    {
+      "id": "placeholder-1",
+      "url": "https://i.pravatar.cc/512?img=12",
+      "name": "Alex",
+      "tags": ["friendly", "professional", "neutral"]
+    },
+    {
+      "id": "placeholder-2",
+      "url": "https://i.pravatar.cc/512?img=45",
+      "name": "Luna",
+      "tags": ["warm", "caring", "feminine"]
+    },
+    {
+      "id": "placeholder-3",
+      "url": "https://i.pravatar.cc/512?img=33",
+      "name": "Atlas",
+      "tags": ["strong", "supportive", "masculine"]
+    },
+    {
+      "id": "placeholder-4",
+      "url": "https://i.pravatar.cc/512?img=47",
+      "name": "Aurora",
+      "tags": ["bright", "energetic", "feminine"]
+    },
+    {
+      "id": "placeholder-5",
+      "url": "https://i.pravatar.cc/512?img=68",
+      "name": "Sage",
+      "tags": ["wise", "calm", "masculine"]
+    },
+    {
+      "id": "placeholder-6",
+      "url": "https://i.pravatar.cc/512?img=23",
+      "name": "Wren",
+      "tags": ["playful", "warm", "feminine"]
+    },
+    {
+      "id": "placeholder-7",
+      "url": "https://i.pravatar.cc/512?img=8",
+      "name": "Echo",
+      "tags": ["mysterious", "thoughtful", "neutral"]
+    },
+    {
+      "id": "placeholder-8",
+      "url": "https://i.pravatar.cc/512?img=31",
+      "name": "River",
+      "tags": ["calm", "flowing", "neutral"]
+    },
+    {
+      "id": "placeholder-9",
+      "url": "https://i.pravatar.cc/512?img=15",
+      "name": "Nova",
+      "tags": ["bright", "optimistic", "feminine"]
+    }
+  ]
+}
