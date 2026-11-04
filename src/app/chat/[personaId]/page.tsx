@@ -37,6 +37,7 @@ export default function ChatPage() {
   const [liveTranscript, setLiveTranscript] = useState("");
   const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false); // mobile only
 
   // Personality controls
   const [flirtyLevel, setFlirtyLevel] = useState(30);
@@ -228,8 +229,16 @@ Adjust your personality to match these settings!`;
     setShowMemory(true);
   }
 
-  function downloadExport() {
-    window.open(`/api/persona/${personaId}/export`, "_blank");
+  async function downloadExport() {
+    // fetch + blob (instead of opening the URL) so it also works in demo mode
+    const res = await fetch(`/api/persona/${personaId}/export`);
+    const blob = new Blob([await res.text()], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `companion-export-${personaId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   async function startCall() {
@@ -371,8 +380,14 @@ Adjust your personality to match these settings!`;
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-[#f5f0ff] via-[#ede7ff] to-[#e5deff] floating-shapes">
       {/* Sidebar */}
-      <div className="w-80 glass border-r border-purple-200 flex flex-col">
+      <div className={`${showSidebar ? "fixed inset-0 z-40 flex" : "hidden"} md:static md:z-auto md:flex w-full md:w-80 glass border-r border-purple-200 flex-col`}>
         <div className="p-6 flex-1 overflow-y-auto">
+          <button
+            onClick={() => setShowSidebar(false)}
+            className="md:hidden mb-4 text-sm font-medium text-purple-700 underline underline-offset-2"
+          >
+            ← Back to chat
+          </button>
           <div className="mb-6">
             {/* Avatar */}
             <div className="relative mb-4 group">
@@ -581,8 +596,27 @@ Adjust your personality to match these settings!`;
           </div>
         )}
 
+        {/* Mobile header (sidebar is hidden on small screens) */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 glass border-b border-purple-200">
+          {persona.face_url ? (
+            <img src={persona.face_url} alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white" />
+          ) : (
+            <div className="w-10 h-10 rounded-full gradient-purple-pink" />
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="font-bold gradient-text truncate">{persona.name}</p>
+            <p className="text-xs text-purple-600">Always here</p>
+          </div>
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="px-3 py-2 rounded-xl glass-purple text-sm font-medium text-purple-700"
+          >
+            Menu
+          </button>
+        </div>
+
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
           <div className="max-w-4xl mx-auto space-y-6">
             {messages.length === 0 && (
               <div className="text-center space-y-4 mt-12">
@@ -639,7 +673,7 @@ Adjust your personality to match these settings!`;
         </div>
 
         {/* Input Area */}
-        <div className="px-8 py-6 glass border-t border-purple-200">
+        <div className="px-3 py-3 md:px-8 md:py-6 glass border-t border-purple-200">
           <div className="max-w-4xl mx-auto">
             {/* Mood Quick Actions */}
             {showQuickActions && (
@@ -659,9 +693,9 @@ Adjust your personality to match these settings!`;
               </div>
             )}
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <button onClick={recording ? stopRecording : startRecording} disabled={inCall}
-                className={`p-4 rounded-full transition-all shadow-lg ${
+                className={`p-3 md:p-4 rounded-full transition-all shadow-lg ${
                   recording ? "bg-red-500 hover:bg-red-600 text-white animate-pulse scale-110"
                     : inCall ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                     : "gradient-purple-pink text-white hover:scale-110 btn-glow"
@@ -672,15 +706,15 @@ Adjust your personality to match these settings!`;
               </button>
 
               <button onClick={() => setShowQuickActions(!showQuickActions)}
-                className="p-4 rounded-full glass-purple text-purple-600 hover:scale-110 transition-all shadow-lg">
+                className="p-3 md:p-4 rounded-full glass-purple text-purple-600 hover:scale-110 transition-all shadow-lg">
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                   <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                 </svg>
               </button>
 
-              <div className="flex-1 glass rounded-full border-2 border-purple-200 focus-within:border-purple-400 transition-all shadow-lg">
-                <textarea className="w-full bg-transparent px-6 py-4 text-purple-900 placeholder-purple-400 outline-none resize-none text-base"
+              <div className="flex-1 min-w-0 glass rounded-full border-2 border-purple-200 focus-within:border-purple-400 transition-all shadow-lg">
+                <textarea className="w-full bg-transparent px-4 py-3 md:px-6 md:py-4 text-purple-900 placeholder-purple-400 outline-none resize-none text-base"
                   placeholder={inCall ? "🔴 In call - speak to chat" : recording ? "🎤 Recording..." : liveTranscript ? "" : "Type a message..."}
                   value={input} onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -693,7 +727,7 @@ Adjust your personality to match these settings!`;
               </div>
 
               <button onClick={() => send()} disabled={loading || !input.trim() || recording || inCall}
-                className="p-4 rounded-full gradient-purple-pink text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 transition-all shadow-lg btn-glow">
+                className="p-3 md:p-4 rounded-full gradient-purple-pink text-white disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110 transition-all shadow-lg btn-glow">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>

@@ -167,6 +167,15 @@ export async function deleteMessage(messageId: string) {
     .eq("id", messageId);
 }
 
+export async function countMessages(personaId: string): Promise<number> {
+  const { count } = await supabaseAdmin
+    .from("messages")
+    .select("id", { count: "exact", head: true })
+    .eq("persona_id", personaId)
+    .is("deleted_at", null);
+  return count ?? 0;
+}
+
 // Powers the "transparent memory" viewer — shows the user exactly what
 // their companion currently remembers, so memory isn't a black box.
 export async function getMemoryForDisplay(personaId: string) {

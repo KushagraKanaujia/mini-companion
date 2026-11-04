@@ -7,6 +7,7 @@ import {
   getRecentMessages,
   saveMessage,
   updateMemorySummary,
+  countMessages,
 } from "@/lib/companion";
 import { ollamaGenerateStream, isOllamaAvailable } from "@/lib/ollama";
 
@@ -27,7 +28,8 @@ export async function POST(req: Request) {
   const history = await getRecentMessages(personaId, 8); // Reduced for faster responses
   const effectivePersonality = await getEffectivePersonality(persona);
 
-  await saveMessage(personaId, "user", message);
+  // The client appends hidden "vibe settings" for the model; store only what the user typed.
+  await saveMessage(personaId, "user", String(message).split("\n\nCURRENT VIBE SETTINGS:")[0]);
 
   const systemPrompt = buildSystemPrompt({ ...persona, personality: effectivePersonality }, memorySummary);
 
@@ -99,7 +101,8 @@ async function handleOllamaChat(
         await saveMessage(personaId, "assistant", fullReply);
 
         // Update memory every ~20 messages
-        const count = history.length + 2;
+        // history is capped at 8 messages, so count the real total here
+        const count = await countMessages(personaId);
         if (count % 20 === 0) {
           updateMemorySummary(personaId).catch(console.error);
         }
@@ -139,7 +142,7 @@ async function handleGeminiChat(
   });
 
   // Retry logic for 503 and 429 errors
-  let result;
+  let result: Awaited<ReturnType<typeof chat.sendMessageStream>> | undefined;
   let retries = 3;
   while (retries > 0) {
     try {
@@ -160,13 +163,16 @@ async function handleGeminiChat(
     }
   }
 
+  if (!result) throw new Error("Gemini did not return a response");
+  const stream = result.stream;
+
   let fullReply = "";
   const encoder = new TextEncoder();
 
   const readable = new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of result.stream) {
+        for await (const chunk of stream) {
           const chunkText = chunk.text();
           fullReply += chunkText;
           controller.enqueue(encoder.encode(chunkText));
@@ -174,7 +180,8 @@ async function handleGeminiChat(
 
         await saveMessage(personaId, "assistant", fullReply);
 
-        const count = history.length + 2;
+        // history is capped at 8 messages, so count the real total here
+        const count = await countMessages(personaId);
         if (count % 20 === 0) {
           updateMemorySummary(personaId).catch(console.error);
         }

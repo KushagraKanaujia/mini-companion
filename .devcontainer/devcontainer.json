@@ -1,0 +1,20 @@
+{
+  "name": "Mini Companion",
+  // Official Node + TypeScript dev container image (devcontainers/images, MIT)
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "postCreateCommand": "npm ci",
+  // Starts in demo mode (no keys needed). Add a .env.local to use Supabase + Ollama/Gemini.
+  "postAttachCommand": "npm run dev",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Mini Companion", "onAutoForward": "openPreview" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["bradlc.vscode-tailwindcss", "dbaeumer.vscode-eslint"]
+    },
+    "codespaces": {
+      "openFiles": ["README.md", "src/lib/companion.ts"]
+    }
+  }
+}

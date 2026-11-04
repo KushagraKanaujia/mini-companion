@@ -1,156 +1,127 @@
 # Mini Companion
 
-A modern AI companion app with persistent memory and natural conversations. Built with Next.js, Supabase, and local AI models.
+**An AI companion that texts like a real friend. It remembers you, you can tune its personality, and you can call it by voice in the browser.**
 
-## Features
+[![Live demo](https://img.shields.io/badge/Live_demo-kush--mini--companion.netlify.app-8b5cf6?style=for-the-badge&logo=netlify&logoColor=white)](https://kush-mini-companion.netlify.app)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_in-Codespaces-181717?style=for-the-badge&logo=github)](https://codespaces.new/KushagraKanaujia/mini-companion?quickstart=1)
+[![License: MIT](https://img.shields.io/badge/License-MIT-ec4899?style=for-the-badge)](LICENSE)
 
-- 💬 **Natural texting** - Responds like a real person, not a chatbot
-- 🧠 **Long-term memory** - Remembers past conversations
-- 🎭 **Customizable personality** - Adjust flirty, funny, supportive, and deep traits
-- 🎯 **Multiple modes** - Casual, Vent, Playful, and Advice modes
-- 🎤 **Voice calling** - Real-time voice conversations with live transcription
-- 📹 **Video bubbles** - See yourself during voice calls
-- 💾 **Data export** - Download all your data as JSON
-- 🔒 **Privacy-first** - Use local AI models (Ollama) for unlimited free chat
+![Chatting with a companion](docs/screenshot-chat.png)
 
-## Tech Stack
+## Try it in one click
 
-- **Frontend**: Next.js 16, React, TailwindCSS
-- **Backend**: Next.js API Routes, Supabase (PostgreSQL)
-- **AI Models**: Ollama (llama3.2:1b for fast responses) or Gemini Flash
-- **Voice**: Browser Web Speech API (free, unlimited)
-- **Styling**: Custom purple/pink gradient theme with glassmorphism
+| Option | What you get | Setup |
+| --- | --- | --- |
+| **[Live demo](https://kush-mini-companion.netlify.app)** | The full UI in your browser: templates, the 6-step companion builder, chat, modes, personality sliders, memory viewer, export, voice calls | None |
+| **[Open in Codespaces](https://codespaces.new/KushagraKanaujia/mini-companion?quickstart=1)** | The source code in a cloud VS Code. Dependencies install and the dev server opens in a preview tab | A GitHub account (Codespaces has a free monthly quota) |
 
-## Setup
+> **About the demo:** the public demo runs in **demo mode**. It needs no database and no API keys. Your companions and chats are saved only in your own browser (localStorage), and replies come from a **small scripted responder, not an AI model**. The scripted replies follow the same texting rules as the real system prompt. To chat with a real model, see [Run it for real](#run-it-for-real). It is free with Ollama.
 
-### 1. Install Dependencies
+Things to try in the demo:
+1. Click **Start Chatting** on a template, or **Create Your Custom Companion** and go through the 6 steps.
+2. Text it something like `i failed my exam today` or `tell me a joke`.
+3. Switch the mode (Chat / Vent / Play / Advice) or move the **Personality** sliders. The replies change with them.
+4. Open **Memory** and **Export** (downloads your chat as JSON). Then try **Video Call** in Chrome, Edge or Safari, which uses your browser's speech recognition and text-to-speech.
+5. Use **Reset demo** in the top banner to clear everything.
+
+## What it does
+
+- **Texts like a person.** Short lowercase messages, slang, and `*actions*`. The system prompt in [`src/lib/companion.ts`](src/lib/companion.ts) makes it reply to what you just said.
+- **Long-term memory.** Every ~20 messages the conversation is compressed into a memory summary that goes into future prompts. The **Memory** panel shows exactly what it remembers.
+- **Tunable personality.** Sliders for flirty, funny, supportive and deep, plus four conversation modes. These are sent along with each message as hidden "vibe settings".
+- **Custom companions.** A 6-step builder covering name, personality type, speaking style, interests, avatar and backstory. It then writes a personality description with the AI model.
+- **Voice calls.** Real-time speech-to-text and text-to-speech through the browser's Web Speech API, with a camera preview bubble. No paid voice API is used.
+- **Your data, portable.** Export a companion, its memory and the full message history as JSON. Deleted messages are left out of context and memory.
+- **Personality versioning.** Personality changes are snapshotted (`persona_versions`) so a user can pin an older version.
+
+## How it works
+
+```
+Browser (Next.js pages)
+   │  fetch /api/chat  ──►  API route builds the system prompt
+   │                         (persona + memory summary + vibe settings)
+   │                         ├─► Ollama (local, llama3.2:1b)   or
+   │                         └─► Google Gemini Flash
+   │  ◄── streamed reply      saves both messages to Supabase (Postgres)
+   │
+Demo mode: src/lib/demo.ts answers the same /api/* calls inside the browser
+           (localStorage + scripted replies), so no server-side services are needed.
+```
+
+Demo mode turns on automatically when `NEXT_PUBLIC_SUPABASE_URL` is not set, or when `NEXT_PUBLIC_DEMO_MODE=true`.
+
+## Tech stack
+
+- **Next.js 16** (App Router, API routes), **React 19**, **TypeScript**
+- **Tailwind CSS v4** with a custom purple/pink glassmorphism theme
+- **Supabase** (Postgres) for companions, messages, memory and versions ([`supabase-schema.sql`](supabase-schema.sql))
+- **Ollama** (`llama3.2:1b`, local and free) or **Google Gemini Flash** for replies and memory
+- **Web Speech API** for voice calls
+- Hosted demo on **Netlify** (Next.js runtime via Netlify's OpenNext adapter)
+
+## Run locally
+
+### Quick start (demo mode, no keys)
+
 ```bash
+git clone https://github.com/KushagraKanaujia/mini-companion
+cd mini-companion
 npm install
+npm run dev        # http://localhost:3000
 ```
 
-### 2. Setup Supabase
-1. Create a free project at [supabase.com](https://supabase.com)
-2. Run the schema:
-   - Go to SQL Editor
-   - Paste contents of `supabase-schema.sql`
-   - Execute
-3. Get your credentials:
-   - Project Settings → API
-   - Copy URL, anon key, and service role key
+### Run it for real
 
-### 3. Setup Ollama (Recommended for Free Usage)
-```bash
-# Install Ollama
-brew install ollama
+1. **Supabase** (the free tier works). Create a project, open the SQL editor, and run [`supabase-schema.sql`](supabase-schema.sql). Then copy the URL, anon key and service-role key from *Project Settings → API*.
+2. **A model.** Ollama is free and runs locally:
+   ```bash
+   brew install ollama          # or see ollama.com for Linux/Windows
+   ollama serve &               # or: brew services start ollama
+   ollama pull llama3.2:1b
+   ```
+   Or use a Google Gemini API key. Gemini has a free tier.
+3. **Environment.** Copy `.env.example` to `.env.local` and fill it in:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=...
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   SUPABASE_SERVICE_ROLE_KEY=...
+   USE_OLLAMA=true
+   # GOOGLE_GEMINI_API_KEY=...   (when USE_OLLAMA=false)
+   ```
+   Note: memory summaries currently use Gemini, so they need `GOOGLE_GEMINI_API_KEY` even when chat uses Ollama.
+4. Run `npm run dev`.
 
-# Start Ollama service
-brew services start ollama
+Avatar uploads in the builder use a Supabase Storage bucket named `Personas`. In demo mode, uploaded photos stay in your browser.
 
-# Pull the fast model
-ollama pull llama3.2:1b
-```
-
-### 4. Environment Variables
-Copy `.env.example` to `.env.local` and fill in:
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_key
-
-# Optional: Use Ollama (recommended) or Gemini
-USE_OLLAMA=true
-GOOGLE_GEMINI_API_KEY=your_key_if_not_using_ollama
-```
-
-### 5. Run Development Server
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000`
-
-## Usage
-
-1. **Create a companion** - Click "Create New Companion" on the home page
-2. **Customize personality** - Use the sliders to adjust traits
-3. **Choose a mode** - Pick between Casual, Vent, Playful, or Advice
-4. **Start chatting** - Text naturally like you would with a friend
-5. **Voice call** - Click "Video Call" for real-time voice chat
-6. **Set moods** - Use the eye icon for quick mood actions
-
-## Project Structure
+## Project structure
 
 ```
-mini-companion/
-├── src/
-│   ├── app/
-│   │   ├── api/          # API routes
-│   │   ├── chat/         # Chat interface
-│   │   ├── create/       # Companion creation
-│   │   └── page.tsx      # Home page
-│   └── lib/
-│       ├── companion.ts  # Core logic & prompts
-│       ├── ollama.ts     # Ollama integration
-│       └── supabase.ts   # Database client
-├── public/               # Static assets
-└── supabase-schema.sql  # Database schema
+src/
+├── app/
+│   ├── page.tsx                 # Home: templates + your companions
+│   ├── create/page.tsx          # 6-step companion builder
+│   ├── chat/[personaId]/        # Chat UI, modes, sliders, memory, voice call
+│   └── api/                     # chat (streaming), personas, memory, export, ...
+├── components/DemoBanner.tsx    # Demo-mode banner + installs the demo fetch handler
+└── lib/
+    ├── companion.ts             # System prompt, memory, versioning, export
+    ├── ollama.ts                # Local model client
+    ├── demo.ts                  # Demo mode (browser storage + scripted replies)
+    └── supabase.ts              # Server Supabase client (lazy)
 ```
 
-## Key Files
+## Deploy your own
 
-- **`src/lib/companion.ts`** - System prompts, memory management, persona logic
-- **`src/app/api/chat/route.ts`** - Streaming chat endpoint with Ollama/Gemini
-- **`src/app/chat/[personaId]/page.tsx`** - Main chat UI with voice/video
-- **`src/lib/ollama.ts`** - Local AI model integration
+- **Netlify (free):** `netlify.toml` is included. `netlify deploy --build --prod` builds the demo locally and uploads it. Set the Supabase/AI env vars and remove `NEXT_PUBLIC_DEMO_MODE` to run against real services. Ollama can't run on Netlify, so use Gemini there.
 
-## Features in Detail
+## Credits
 
-### Personality System
-Adjust 4 core traits (0-100%):
-- 😘 **Flirty** - Playful and charming
-- 😂 **Funny** - Jokes and humor
-- 💜 **Supportive** - Caring and validating
-- 🤔 **Deep** - Thoughtful questions
-
-### Conversation Modes
-- 💬 **Casual** - Light, fun chatting
-- 💭 **Vent** - Supportive listening
-- 🎮 **Playful** - Games and jokes
-- 💡 **Advice** - Thoughtful guidance
-
-### Voice Features
-- Real-time speech recognition
-- Natural interruption support
-- Live transcription display
-- Browser-based (no API costs)
-
-## Performance
-
-- **Response time**: ~1-2 seconds with llama3.2:1b
-- **Memory**: Only last 8 messages + summary for speed
-- **Cost**: $0 with Ollama, minimal with Gemini Flash
-
-## Deployment
-
-### Vercel
-```bash
-vercel deploy
-```
-
-Set environment variables in Vercel dashboard.
-
-### Environment Variables Needed
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `USE_OLLAMA=false` (Vercel can't run Ollama)
-- `GOOGLE_GEMINI_API_KEY` (for cloud deployment)
+- [Next.js](https://github.com/vercel/next.js) (MIT), [Tailwind CSS](https://github.com/tailwindlabs/tailwindcss) (MIT), [Supabase JS](https://github.com/supabase/supabase-js) (MIT), [Ollama](https://github.com/ollama/ollama) (MIT)
+- [Netlify Next.js runtime / OpenNext adapter](https://github.com/opennextjs/opennextjs-netlify) (MIT), used for the hosted demo
+- [Dev Containers images](https://github.com/devcontainers/images) (MIT): the `typescript-node` image behind the Codespaces setup
+- Badges by [shields.io](https://shields.io) (CC0)
+- Template portraits from [Unsplash](https://unsplash.com/license); gallery placeholders from [pravatar.cc](https://pravatar.cc)
 
 ## License
 
-MIT
-
-## Contributing
-
-Pull requests welcome! Please open an issue first to discuss changes.
+[MIT](LICENSE)
