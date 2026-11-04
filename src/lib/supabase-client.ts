@@ -1,7 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 // Client-side Supabase client for browser usage (image uploads, etc.)
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Created lazily so pages still load in demo mode without Supabase env vars.
+let client: SupabaseClient | null = null;
+
+export function getSupabase(): SupabaseClient {
+  if (!client) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) throw new Error("Supabase is not configured");
+    client = createClient(url, key);
+  }
+  return client;
+}

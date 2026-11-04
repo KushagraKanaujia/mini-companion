@@ -1,0 +1,10 @@
+# Netlify config for the public demo.
+# Next.js on Netlify runs through Netlify's OpenNext adapter (@netlify/plugin-nextjs),
+# which the Netlify CLI picks up automatically for Next.js projects.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Public demo: no database, no model keys. See src/lib/demo.ts.
+  NEXT_PUBLIC_DEMO_MODE = "true"

@@ -19,10 +19,14 @@
   --font-mono: var(--font-geist-mono);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* Keep resets in the base layer: an unlayered `* { padding: 0 }` would
+   override every Tailwind v4 spacing utility (p-6, mb-4, gap...). */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 }
 
 body {

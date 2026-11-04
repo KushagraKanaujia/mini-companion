@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase-client";
+import { getSupabase } from "@/lib/supabase-client";
+import { DEMO_MODE } from "@/lib/demo";
 
 type Voice = {
   voice_id: string;
@@ -127,6 +128,18 @@ export default function CreatePersonaPage() {
     setError("");
 
     try {
+      if (DEMO_MODE) {
+        // Demo mode: keep the photo in the browser instead of uploading it.
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        setFaceUrl(dataUrl);
+        return;
+      }
+      const supabase = getSupabase();
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random()}.${fileExt}`;
       const filePath = `persona-faces/${fileName}`;
